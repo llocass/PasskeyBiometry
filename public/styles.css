@@ -47,6 +47,10 @@ h1 {
   gap: 12px;
 }
 
+.hidden {
+  display: none;
+}
+
 label {
   font-weight: 600;
 }
@@ -76,6 +80,14 @@ button {
 
 button:nth-child(3) {
   background: #3c4f7a;
+}
+
+.checkpointTitle {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 44px);
+  font-weight: 800;
+  color: #0a8b4f;
+  letter-spacing: 0.02em;
 }
 
 pre {

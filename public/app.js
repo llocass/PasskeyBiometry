@@ -1,7 +1,10 @@
 const usernameInput = document.getElementById('username');
 const registerBtn = document.getElementById('registerBtn');
 const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+const authCard = document.getElementById('authCard');
+const homeCard = document.getElementById('homeCard');
+const homeUser = document.getElementById('homeUser');
+const homeLogoutBtn = document.getElementById('homeLogoutBtn');
 const logEl = document.getElementById('log');
 const supportEl = document.getElementById('support');
 const sessionEl = document.getElementById('session');
@@ -137,9 +140,18 @@ function getUsername() {
 async function refreshSession() {
   const response = await fetch('/api/me');
   const data = await response.json();
-  sessionEl.textContent = data.loggedIn
-    ? `Sessao ativa: ${data.username}`
-    : 'Sessao ativa: nao autenticado';
+  if (data.loggedIn) {
+    sessionEl.textContent = `Sessao ativa: ${data.username}`;
+    homeUser.textContent = `Utilizador: ${data.username}`;
+    authCard.classList.add('hidden');
+    homeCard.classList.remove('hidden');
+    usernameInput.value = data.username;
+  } else {
+    sessionEl.textContent = 'Sessao ativa: nao autenticado';
+    homeUser.textContent = '';
+    authCard.classList.remove('hidden');
+    homeCard.classList.add('hidden');
+  }
 }
 
 async function registerPasskey() {
@@ -150,7 +162,7 @@ async function registerPasskey() {
 
   const options = await api('/api/register/start', { username });
   if ((options.excludeCredentials || []).length > 0) {
-    throw new Error('Este utilizador já tem uma passkey registada. Não é permitido criar outra.');
+    throw new Error('Este utilizador ja tem uma passkey registada. Nao e permitido criar outra.');
   }
 
   const publicKey = prepareRegistrationOptions(options);
@@ -188,7 +200,7 @@ async function logout() {
 function setButtons(enabled) {
   registerBtn.disabled = !enabled;
   loginBtn.disabled = !enabled;
-  logoutBtn.disabled = !enabled;
+  homeLogoutBtn.disabled = !enabled;
 }
 
 async function withAction(action, title) {
@@ -221,7 +233,7 @@ async function boot() {
   loginBtn.addEventListener('click', () =>
     withAction(loginWithPasskey, 'Login passkey'),
   );
-  logoutBtn.addEventListener('click', () => withAction(logout, 'Logout'));
+  homeLogoutBtn.addEventListener('click', () => withAction(logout, 'Logout'));
 
   await refreshSession();
 }
