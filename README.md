@@ -1,6 +1,8 @@
-# Passkey + Biometria em Localhost
+## Passkey + Biometria em Localhost
 
-Prototipo de login sem password com WebAuthn (passkeys), exigindo validacao do utilizador (`userVerification: required`) no dispositivo.
+<img width="1896" height="908" alt="{8812C905-B650-4966-B609-CADED9B3C08A}" src="https://github.com/user-attachments/assets/71dc21cb-be39-40ca-a9b1-db403cd0a1e4" />
+
+Prototipo de login sem password com WebAuthn (passkeys), exigindo validacao do utilizador (`userVerification: required`) num dispositivo móvel.
 
 ## O que este projeto faz
 
