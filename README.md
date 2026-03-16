@@ -12,6 +12,7 @@ Prototipo de login sem password com WebAuthn (passkeys), exigindo validacao do u
 - Persistencia em ficheiro JSON local.
 - Apenas 1 passkey por utilizador.
 - Registo restrito a autenticador externo (cross-platform), com validacao de transporte `hybrid` por defeito.
+- Gestao da passkey no checkpoint: visualizacao de metadata, ultimo uso e revogacao para reenrolamento.
 
 ## Requisitos
 
@@ -34,6 +35,7 @@ Abrir:
 1. Inserir nome de utilizador.
 2. Clicar em `Registar passkey` e confirmar biometria/PIN no dispositivo.
 3. Clicar em `Entrar com passkey`.
+4. No checkpoint autenticado, ver a passkey ativa e revoga-la se for preciso registar outra.
 
 ## Telemovel como autenticador
 

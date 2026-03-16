@@ -45,6 +45,9 @@ function credentialToRuntime(credential) {
     publicKey: Buffer.from(credential.publicKeyBase64, 'base64'),
     counter: Number(credential.counter || 0),
     transports: Array.isArray(credential.transports) ? credential.transports : [],
+    createdAt: credential.createdAt || null,
+    lastUsedAt: credential.lastUsedAt || null,
+    revokedAt: credential.revokedAt || null,
   };
 }
 
@@ -73,6 +76,12 @@ function getOrCreateUser(username) {
 
 function getCredentialsByUserID(userID) {
   return store.credentials
+    .filter((credential) => credential.userID === userID && !credential.revokedAt)
+    .map(credentialToRuntime);
+}
+
+function getAllCredentialsByUserID(userID) {
+  return store.credentials
     .filter((credential) => credential.userID === userID)
     .map(credentialToRuntime);
 }
@@ -90,7 +99,9 @@ function getUserWithCredentialsByUsername(username) {
 }
 
 function findUserByCredentialID(credentialID) {
-  const credential = store.credentials.find((item) => item.id === credentialID);
+  const credential = store.credentials.find(
+    (item) => item.id === credentialID && !item.revokedAt,
+  );
   if (!credential) {
     return null;
   }
@@ -117,11 +128,15 @@ function saveCredential(userID, credential, transports) {
     counter: Number(credential.counter || 0),
     transports: Array.isArray(transports) ? transports : [],
     createdAt: new Date().toISOString(),
+    lastUsedAt: null,
+    revokedAt: null,
   };
 
   const index = store.credentials.findIndex((item) => item.id === credential.id);
   if (index >= 0) {
     normalized.createdAt = store.credentials[index].createdAt || normalized.createdAt;
+    normalized.lastUsedAt = store.credentials[index].lastUsedAt || null;
+    normalized.revokedAt = store.credentials[index].revokedAt || null;
     store.credentials[index] = normalized;
   } else {
     store.credentials.push(normalized);
@@ -137,7 +152,46 @@ function updateCredentialCounter(credentialID, newCounter) {
   }
 
   credential.counter = Number(newCounter || 0);
+  credential.lastUsedAt = new Date().toISOString();
   saveStore();
+}
+
+function listPasskeysForUser(userID) {
+  return getAllCredentialsByUserID(userID)
+    .sort((left, right) => {
+      if (left.revokedAt && !right.revokedAt) {
+        return 1;
+      }
+      if (!left.revokedAt && right.revokedAt) {
+        return -1;
+      }
+      return String(right.createdAt || '').localeCompare(String(left.createdAt || ''));
+    })
+    .map((credential) => ({
+      id: credential.id,
+      shortId: credential.id.slice(0, 10),
+      createdAt: credential.createdAt,
+      lastUsedAt: credential.lastUsedAt,
+      revokedAt: credential.revokedAt,
+      transports: credential.transports,
+      isActive: !credential.revokedAt,
+    }));
+}
+
+function revokeCredentialForUser(userID, credentialID) {
+  const credential = store.credentials.find(
+    (item) => item.id === credentialID && item.userID === userID,
+  );
+  if (!credential) {
+    return { ok: false, error: 'Passkey not found for this user', status: 404 };
+  }
+  if (credential.revokedAt) {
+    return { ok: false, error: 'Passkey is already revoked', status: 409 };
+  }
+
+  credential.revokedAt = new Date().toISOString();
+  saveStore();
+  return { ok: true, credential };
 }
 
 app.use(express.json({ limit: '1mb' }));
@@ -370,6 +424,51 @@ app.get('/api/me', (req, res) => {
   return res.json({
     loggedIn: true,
     username: req.session.loggedInUser,
+  });
+});
+
+app.get('/api/passkeys', (req, res) => {
+  if (!req.session.loggedInUser) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const user = getUserByUsername(req.session.loggedInUser);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found for this session' });
+  }
+
+  return res.json({
+    username: user.username,
+    passkeys: listPasskeysForUser(user.id),
+  });
+});
+
+app.post('/api/passkeys/revoke', (req, res) => {
+  if (!req.session.loggedInUser) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const credentialID = String(req.body?.credentialId || '').trim();
+  if (!credentialID) {
+    return res.status(400).json({ error: 'credentialId is required' });
+  }
+
+  const user = getUserByUsername(req.session.loggedInUser);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found for this session' });
+  }
+
+  const result = revokeCredentialForUser(user.id, credentialID);
+  if (!result.ok) {
+    return res.status(result.status).json({ error: result.error });
+  }
+
+  req.session.destroy(() => {
+    res.json({
+      ok: true,
+      username: user.username,
+      revokedCredentialId: credentialID,
+    });
   });
 });
 

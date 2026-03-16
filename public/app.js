@@ -5,6 +5,8 @@ const authCard = document.getElementById('authCard');
 const homeCard = document.getElementById('homeCard');
 const homeUser = document.getElementById('homeUser');
 const homeLogoutBtn = document.getElementById('homeLogoutBtn');
+const passkeySummary = document.getElementById('passkeySummary');
+const passkeyList = document.getElementById('passkeyList');
 const logEl = document.getElementById('log');
 const supportEl = document.getElementById('support');
 const sessionEl = document.getElementById('session');
@@ -137,6 +139,102 @@ function getUsername() {
   return usernameInput.value.trim().toLowerCase();
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return map[character];
+  });
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return 'Ainda sem registo';
+  }
+
+  return new Intl.DateTimeFormat('pt-PT', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function renderPasskeys(passkeys) {
+  if (!passkeys.length) {
+    passkeySummary.textContent = 'Sem passkeys associadas a esta conta.';
+    passkeyList.innerHTML =
+      '<p class="passkeyEmpty">Nao existe nenhuma passkey ativa. Podes voltar a registar uma nova.</p>';
+    return;
+  }
+
+  const activeCount = passkeys.filter((passkey) => passkey.isActive).length;
+  const revokedCount = passkeys.length - activeCount;
+  passkeySummary.textContent = `${activeCount} ativa(s), ${revokedCount} revogada(s)`;
+  passkeyList.innerHTML = passkeys
+    .map((passkey) => {
+      const transports = passkey.transports.length
+        ? passkey.transports.join(', ')
+        : 'Nao reportado';
+
+      return `
+        <article class="passkeyItem">
+          <div class="passkeyItemHead">
+            <div>
+              <p class="passkeyTitle">Passkey ${escapeHtml(passkey.shortId)}</p>
+            </div>
+            <span class="badge ${passkey.isActive ? 'badgeActive' : 'badgeRevoked'}">
+              ${passkey.isActive ? 'Ativa' : 'Revogada'}
+            </span>
+          </div>
+          <div class="passkeyMeta">
+            <div class="passkeyMetaBlock">
+              <span class="passkeyMetaLabel">Criada em</span>
+              <span class="passkeyMetaValue">${escapeHtml(formatDateTime(passkey.createdAt))}</span>
+            </div>
+            <div class="passkeyMetaBlock">
+              <span class="passkeyMetaLabel">Ultimo uso</span>
+              <span class="passkeyMetaValue">${escapeHtml(formatDateTime(passkey.lastUsedAt))}</span>
+            </div>
+            <div class="passkeyMetaBlock">
+              <span class="passkeyMetaLabel">Transportes</span>
+              <span class="passkeyMetaValue">${escapeHtml(transports)}</span>
+            </div>
+            <div class="passkeyMetaBlock">
+              <span class="passkeyMetaLabel">ID completo</span>
+              <span class="passkeyMetaValue">${escapeHtml(passkey.id)}</span>
+            </div>
+          </div>
+          ${
+            passkey.isActive
+              ? `<div class="actions"><button type="button" class="dangerButton" data-passkey-action="revoke" data-passkey-id="${escapeHtml(passkey.id)}">Revogar passkey</button></div>`
+              : ''
+          }
+        </article>
+      `;
+    })
+    .join('');
+}
+
+async function refreshPasskeys() {
+  const response = await fetch('/api/passkeys');
+  if (response.status === 401) {
+    passkeySummary.textContent = '';
+    passkeyList.innerHTML = '';
+    return;
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Nao foi possivel carregar as passkeys');
+  }
+
+  renderPasskeys(data.passkeys || []);
+}
+
 async function refreshSession() {
   const response = await fetch('/api/me');
   const data = await response.json();
@@ -146,11 +244,14 @@ async function refreshSession() {
     authCard.classList.add('hidden');
     homeCard.classList.remove('hidden');
     usernameInput.value = data.username;
+    await refreshPasskeys();
   } else {
     sessionEl.textContent = 'Sessao ativa: nao autenticado';
     homeUser.textContent = '';
     authCard.classList.remove('hidden');
     homeCard.classList.add('hidden');
+    passkeySummary.textContent = '';
+    passkeyList.innerHTML = '';
   }
 }
 
@@ -197,22 +298,41 @@ async function logout() {
   await api('/api/logout');
 }
 
+async function revokePasskey(credentialId) {
+  const confirmed = window.confirm(
+    'Isto vai revogar a passkey atual e terminar a sessao. Queres continuar?',
+  );
+  if (!confirmed) {
+    return { cancelled: true };
+  }
+
+  const result = await api('/api/passkeys/revoke', { credentialId });
+  usernameInput.value = result.username;
+  return { cancelled: false };
+}
+
 function setButtons(enabled) {
   registerBtn.disabled = !enabled;
   loginBtn.disabled = !enabled;
   homeLogoutBtn.disabled = !enabled;
+  for (const actionButton of passkeyList.querySelectorAll('[data-passkey-action]')) {
+    actionButton.disabled = !enabled;
+  }
 }
 
 async function withAction(action, title) {
   try {
     setButtons(false);
-    await action();
+    const result = await action();
+    if (result?.cancelled) {
+      return;
+    }
     log(`${title}: OK`);
   } catch (error) {
     log(`${title}: ERRO`, { message: error.message });
   } finally {
     setButtons(true);
-    refreshSession();
+    await refreshSession();
   }
 }
 
@@ -234,6 +354,17 @@ async function boot() {
     withAction(loginWithPasskey, 'Login passkey'),
   );
   homeLogoutBtn.addEventListener('click', () => withAction(logout, 'Logout'));
+  passkeyList.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-passkey-action="revoke"]');
+    if (!button) {
+      return;
+    }
+
+    withAction(
+      () => revokePasskey(button.getAttribute('data-passkey-id')),
+      'Revogar passkey',
+    );
+  });
 
   await refreshSession();
 }

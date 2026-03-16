@@ -90,6 +90,122 @@ button:nth-child(3) {
   letter-spacing: 0.02em;
 }
 
+.passkeyManager {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dce6f8;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f3f8ff 100%);
+}
+
+.passkeyManagerHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  align-items: baseline;
+}
+
+.passkeyManager h3 {
+  margin: 0;
+}
+
+.metaText {
+  margin: 0;
+  color: var(--muted);
+}
+
+.passkeyList {
+  display: grid;
+  gap: 10px;
+}
+
+.passkeyItem {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #d7e2f3;
+  background: #ffffff;
+}
+
+.passkeyItemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.passkeyTitle {
+  margin: 0;
+  font-size: 17px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badgeActive {
+  background: #dff7ea;
+  color: #0a8b4f;
+}
+
+.badgeRevoked {
+  background: #edf1f8;
+  color: #4b5c7e;
+}
+
+.passkeyMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.passkeyMetaBlock {
+  display: grid;
+  gap: 4px;
+}
+
+.passkeyMetaLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.passkeyMetaValue {
+  font-size: 14px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.passkeyEmpty {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed #cbd8ec;
+  background: #ffffff;
+  color: var(--muted);
+}
+
+.dangerButton {
+  background: #d14343;
+}
+
+@media (max-width: 640px) {
+  .passkeyItemHead {
+    align-items: flex-start;
+  }
+}
+
 pre {
   margin: 0;
   background: #f4f8ff;
