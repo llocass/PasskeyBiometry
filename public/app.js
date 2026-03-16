@@ -1,15 +1,28 @@
 const usernameInput = document.getElementById('username');
 const registerBtn = document.getElementById('registerBtn');
 const loginBtn = document.getElementById('loginBtn');
+const toggleRecoveryBtn = document.getElementById('toggleRecoveryBtn');
 const authCard = document.getElementById('authCard');
+const recoveryCard = document.getElementById('recoveryCard');
+const recoveryPhraseInput = document.getElementById('recoveryPhraseInput');
+const recoverAccountBtn = document.getElementById('recoverAccountBtn');
+const cancelRecoveryBtn = document.getElementById('cancelRecoveryBtn');
 const homeCard = document.getElementById('homeCard');
 const homeUser = document.getElementById('homeUser');
 const homeLogoutBtn = document.getElementById('homeLogoutBtn');
+const recoveryStatusSummary = document.getElementById('recoveryStatusSummary');
+const recoveryStatusDetail = document.getElementById('recoveryStatusDetail');
+const generateRecoveryBtn = document.getElementById('generateRecoveryBtn');
+const rotateRecoveryBtn = document.getElementById('rotateRecoveryBtn');
 const passkeySummary = document.getElementById('passkeySummary');
 const passkeyList = document.getElementById('passkeyList');
+const recoveryPhraseCard = document.getElementById('recoveryPhraseCard');
+const recoveryPhraseValue = document.getElementById('recoveryPhraseValue');
+const dismissRecoveryPhraseBtn = document.getElementById('dismissRecoveryPhraseBtn');
 const logEl = document.getElementById('log');
 const supportEl = document.getElementById('support');
 const sessionEl = document.getElementById('session');
+let currentRecoveryConfigured = false;
 
 function log(message, data) {
   const line =
@@ -139,6 +152,10 @@ function getUsername() {
   return usernameInput.value.trim().toLowerCase();
 }
 
+function getRecoveryPhraseInput() {
+  return recoveryPhraseInput.value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => {
     const map = {
@@ -161,6 +178,42 @@ function formatDateTime(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function setRecoveryPanel(open) {
+  recoveryCard.classList.toggle('hidden', !open);
+  toggleRecoveryBtn.classList.toggle('hidden', open);
+  if (!open) {
+    recoveryPhraseInput.value = '';
+  }
+}
+
+function showRecoveryPhrase(phrase) {
+  recoveryPhraseValue.textContent = phrase;
+  recoveryPhraseCard.classList.remove('hidden');
+}
+
+function hideRecoveryPhrase() {
+  recoveryPhraseValue.textContent = '';
+  recoveryPhraseCard.classList.add('hidden');
+}
+
+function renderRecoveryStatus(recovery) {
+  currentRecoveryConfigured = Boolean(recovery?.configured);
+  if (!recovery?.configured) {
+    recoveryStatusSummary.textContent = 'Nao configurada';
+    recoveryStatusDetail.textContent =
+      'Gera uma frase de recuperacao de 10 palavras para reenrolar a passkey se perderes o dispositivo.';
+    generateRecoveryBtn.classList.remove('hidden');
+    rotateRecoveryBtn.classList.add('hidden');
+    return;
+  }
+
+  recoveryStatusSummary.textContent = `Configurada (${recovery.wordCount} palavras)`;
+  recoveryStatusDetail.textContent =
+    `Criada em ${formatDateTime(recovery.createdAt)}. Ultimo uso: ${formatDateTime(recovery.lastUsedAt)}.`;
+  generateRecoveryBtn.classList.add('hidden');
+  rotateRecoveryBtn.classList.remove('hidden');
 }
 
 function renderPasskeys(passkeys) {
@@ -209,8 +262,10 @@ function renderPasskeys(passkeys) {
             </div>
           </div>
           ${
-            passkey.isActive
+            passkey.isActive && currentRecoveryConfigured
               ? `<div class="actions"><button type="button" class="dangerButton" data-passkey-action="revoke" data-passkey-id="${escapeHtml(passkey.id)}">Revogar passkey</button></div>`
+              : passkey.isActive
+                ? '<p class="metaText">Configura primeiro uma frase de recuperacao para poderes revogar esta passkey com seguranca.</p>'
               : ''
           }
         </article>
@@ -244,14 +299,21 @@ async function refreshSession() {
     authCard.classList.add('hidden');
     homeCard.classList.remove('hidden');
     usernameInput.value = data.username;
+    setRecoveryPanel(false);
+    renderRecoveryStatus(data.recovery || { configured: false, wordCount: 10 });
     await refreshPasskeys();
   } else {
     sessionEl.textContent = 'Sessao ativa: nao autenticado';
     homeUser.textContent = '';
     authCard.classList.remove('hidden');
     homeCard.classList.add('hidden');
+    currentRecoveryConfigured = false;
     passkeySummary.textContent = '';
     passkeyList.innerHTML = '';
+    recoveryStatusSummary.textContent = '';
+    recoveryStatusDetail.textContent = '';
+    generateRecoveryBtn.classList.add('hidden');
+    rotateRecoveryBtn.classList.add('hidden');
   }
 }
 
@@ -274,6 +336,10 @@ async function registerPasskey() {
 
   const registrationResponse = credentialToJSON(credential);
   await api('/api/register/finish', { username, registrationResponse });
+  const recoverySetup = await api('/api/recovery/setup');
+  if (recoverySetup.generated) {
+    showRecoveryPhrase(recoverySetup.phrase);
+  }
 }
 
 async function loginWithPasskey() {
@@ -298,6 +364,49 @@ async function logout() {
   await api('/api/logout');
 }
 
+async function generateRecoveryPhraseSetup(rotate) {
+  if (rotate) {
+    const confirmed = window.confirm(
+      'Isto vai substituir a frase de recuperacao atual. Queres continuar?',
+    );
+    if (!confirmed) {
+      return { cancelled: true };
+    }
+  }
+
+  const result = await api('/api/recovery/setup', { rotate });
+  if (result.generated) {
+    showRecoveryPhrase(result.phrase);
+  }
+  renderRecoveryStatus(result);
+  return { cancelled: false };
+}
+
+async function recoverAccountWithPhrase() {
+  const username = getUsername();
+  const phrase = getRecoveryPhraseInput();
+  if (!username) {
+    throw new Error('Indica o utilizador antes de iniciar a recuperacao');
+  }
+  if (!phrase) {
+    throw new Error('Indica a frase de recuperacao');
+  }
+
+  await api('/api/recovery/verify', { username, phrase });
+  const options = await api('/api/recovery/register/start');
+  const publicKey = prepareRegistrationOptions(options);
+  const credential = await navigator.credentials.create({ publicKey });
+  if (!credential) {
+    throw new Error('Registo de recuperacao cancelado pelo utilizador');
+  }
+
+  const registrationResponse = credentialToJSON(credential);
+  const result = await api('/api/recovery/register/finish', { registrationResponse });
+  usernameInput.value = result.username;
+  showRecoveryPhrase(result.recoveryPhrase);
+  setRecoveryPanel(false);
+}
+
 async function revokePasskey(credentialId) {
   const confirmed = window.confirm(
     'Isto vai revogar a passkey atual e terminar a sessao. Queres continuar?',
@@ -314,7 +423,13 @@ async function revokePasskey(credentialId) {
 function setButtons(enabled) {
   registerBtn.disabled = !enabled;
   loginBtn.disabled = !enabled;
+  toggleRecoveryBtn.disabled = !enabled;
+  recoverAccountBtn.disabled = !enabled;
+  cancelRecoveryBtn.disabled = !enabled;
   homeLogoutBtn.disabled = !enabled;
+  generateRecoveryBtn.disabled = !enabled;
+  rotateRecoveryBtn.disabled = !enabled;
+  dismissRecoveryPhraseBtn.disabled = !enabled;
   for (const actionButton of passkeyList.querySelectorAll('[data-passkey-action]')) {
     actionButton.disabled = !enabled;
   }
@@ -353,7 +468,19 @@ async function boot() {
   loginBtn.addEventListener('click', () =>
     withAction(loginWithPasskey, 'Login passkey'),
   );
+  toggleRecoveryBtn.addEventListener('click', () => setRecoveryPanel(true));
+  cancelRecoveryBtn.addEventListener('click', () => setRecoveryPanel(false));
+  recoverAccountBtn.addEventListener('click', () =>
+    withAction(recoverAccountWithPhrase, 'Recuperacao de conta'),
+  );
   homeLogoutBtn.addEventListener('click', () => withAction(logout, 'Logout'));
+  generateRecoveryBtn.addEventListener('click', () =>
+    withAction(() => generateRecoveryPhraseSetup(false), 'Gerar frase de recuperacao'),
+  );
+  rotateRecoveryBtn.addEventListener('click', () =>
+    withAction(() => generateRecoveryPhraseSetup(true), 'Regenerar frase de recuperacao'),
+  );
+  dismissRecoveryPhraseBtn.addEventListener('click', () => hideRecoveryPhrase());
   passkeyList.addEventListener('click', (event) => {
     const button = event.target.closest('[data-passkey-action="revoke"]');
     if (!button) {

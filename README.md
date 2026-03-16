@@ -13,6 +13,7 @@ Prototipo de login sem password com WebAuthn (passkeys), exigindo validacao do u
 - Apenas 1 passkey por utilizador.
 - Registo restrito a autenticador externo (cross-platform), com validacao de transporte `hybrid` por defeito.
 - Gestao da passkey no checkpoint: visualizacao de metadata, ultimo uso e revogacao para reenrolamento.
+- Frase de recuperacao com 10 palavras para recuperar a conta e reenrolar uma nova passkey se o dispositivo for perdido.
 
 ## Requisitos
 
@@ -36,6 +37,7 @@ Abrir:
 2. Clicar em `Registar passkey` e confirmar biometria/PIN no dispositivo.
 3. Clicar em `Entrar com passkey`.
 4. No checkpoint autenticado, ver a passkey ativa e revoga-la se for preciso registar outra.
+5. Guardar a frase de recuperacao mostrada uma unica vez.
 
 ## Telemovel como autenticador
 
@@ -43,6 +45,31 @@ Abrir:
 - A verificacao exata (Face ID, impressao digital, PIN) depende do SO e do autenticador.
 - O servidor exige apenas que exista verificacao do utilizador.
 - Nota: a WebAuthn nao permite garantir 100% "apenas telemovel"; esta app aplica a politica mais restritiva possivel (`cross-platform` + `hybrid`).
+
+## Recuperacao de conta
+
+- Depois do primeiro registo, o sistema gera uma frase de recuperacao com 10 palavras e mostra-a uma unica vez.
+- O servidor guarda apenas `salt + hash` da frase.
+- Se o dispositivo da passkey for perdido, o utilizador pode validar a frase e reenrolar uma nova passkey.
+- No final da recuperacao, a passkey antiga e revogada e a frase de recuperacao e regenerada.
+
+## Como funciona a frase de recuperacao
+
+1. A conta e criada normalmente com passkey e verificacao biometrica.
+2. Depois do registo inicial, o sistema gera uma frase de recuperacao com 10 palavras aleatorias.
+3. Essa frase e mostrada uma unica vez ao utilizador e deve ser guardada offline.
+4. No servidor, a frase nao e guardada em claro: apenas `salt + hash`.
+5. Se a passkey do dispositivo for perdida, o utilizador pode iniciar o fluxo `Recuperar conta`.
+6. A frase validada nao faz login direto. Em vez disso, abre uma sessao curta de recuperacao.
+7. Nessa sessao, o utilizador e obrigado a registar uma nova passkey.
+8. Quando a nova passkey fica ativa, a passkey anterior e revogada e a frase de recuperacao e renovada.
+
+## Garantias deste fluxo
+
+- O login normal continua a ser apenas com passkey.
+- A frase de recuperacao serve apenas para recuperar a conta, nao para autenticar no dia a dia.
+- A revogacao da passkey ativa exige que exista uma frase de recuperacao configurada, para evitar lockout acidental.
+- O reenrolamento de uma nova passkey para contas existentes so e permitido pelo fluxo de recuperacao.
 
 ## Variaveis de ambiente opcionais
 

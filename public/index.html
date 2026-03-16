@@ -21,6 +21,30 @@
         <div class="actions">
           <button id="registerBtn" type="button">Registar passkey movel</button>
           <button id="loginBtn" type="button">Entrar com passkey</button>
+          <button id="toggleRecoveryBtn" type="button" class="secondaryButton">
+            Recuperar conta
+          </button>
+        </div>
+      </section>
+
+      <section id="recoveryCard" class="card hidden">
+        <h2>Recuperar conta</h2>
+        <p class="subtitle">
+          Usa o mesmo utilizador acima e introduz a tua frase de recuperacao para
+          registar uma nova passkey.
+        </p>
+        <label for="recoveryPhraseInput">Frase de recuperacao</label>
+        <textarea
+          id="recoveryPhraseInput"
+          rows="4"
+          placeholder="ex: amber harbor ..."
+          spellcheck="false"
+        ></textarea>
+        <div class="actions">
+          <button id="recoverAccountBtn" type="button">Recuperar e reenrolar passkey</button>
+          <button id="cancelRecoveryBtn" type="button" class="secondaryButton">
+            Cancelar
+          </button>
         </div>
       </section>
 
@@ -28,6 +52,19 @@
         <h2>Checkpoint</h2>
         <p class="checkpointTitle">Logged in!</p>
         <p id="homeUser"></p>
+        <section class="recoveryManager">
+          <div class="passkeyManagerHead">
+            <h3>Frase de recuperacao</h3>
+            <p id="recoveryStatusSummary" class="metaText"></p>
+          </div>
+          <p id="recoveryStatusDetail" class="metaText"></p>
+          <div class="actions">
+            <button id="generateRecoveryBtn" type="button">Gerar frase de recuperacao</button>
+            <button id="rotateRecoveryBtn" type="button" class="secondaryButton">
+              Regenerar frase
+            </button>
+          </div>
+        </section>
         <section class="passkeyManager">
           <div class="passkeyManagerHead">
             <h3>A tua passkey</h3>
@@ -40,6 +77,18 @@
         </section>
         <div class="actions">
           <button id="homeLogoutBtn" type="button">Logout</button>
+        </div>
+      </section>
+
+      <section id="recoveryPhraseCard" class="card hidden">
+        <h2>Guarda esta frase de recuperacao</h2>
+        <p class="subtitle">
+          Esta frase aparece uma unica vez. Guarda-a offline para recuperares a conta
+          se perderes o dispositivo da passkey.
+        </p>
+        <pre id="recoveryPhraseValue" class="recoveryPhraseValue"></pre>
+        <div class="actions">
+          <button id="dismissRecoveryPhraseBtn" type="button">Ja guardei a frase</button>
         </div>
       </section>
 
