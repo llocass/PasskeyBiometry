@@ -19,6 +19,8 @@ const passkeyList = document.getElementById('passkeyList');
 const recoveryPhraseCard = document.getElementById('recoveryPhraseCard');
 const recoveryPhraseValue = document.getElementById('recoveryPhraseValue');
 const dismissRecoveryPhraseBtn = document.getElementById('dismissRecoveryPhraseBtn');
+const recoveryFlowCard = document.getElementById('recoveryFlowCard');
+const recoveryFlowStatus = document.getElementById('recoveryFlowStatus');
 const logEl = document.getElementById('log');
 const supportEl = document.getElementById('support');
 const sessionEl = document.getElementById('session');
@@ -198,6 +200,16 @@ function hideRecoveryPhrase() {
   recoveryPhraseCard.classList.add('hidden');
 }
 
+function showRecoveryFlowStatus(message) {
+  recoveryFlowStatus.textContent = message;
+  recoveryFlowCard.classList.remove('hidden');
+}
+
+function hideRecoveryFlowStatus() {
+  recoveryFlowStatus.textContent = '';
+  recoveryFlowCard.classList.add('hidden');
+}
+
 function renderRecoveryStatus(recovery) {
   currentRecoveryConfigured = Boolean(recovery?.configured);
   if (!recovery?.configured) {
@@ -307,6 +319,7 @@ async function refreshSession() {
     homeUser.textContent = '';
     authCard.classList.remove('hidden');
     homeCard.classList.add('hidden');
+    hideRecoveryFlowStatus();
     currentRecoveryConfigured = false;
     passkeySummary.textContent = '';
     passkeyList.innerHTML = '';
@@ -393,10 +406,15 @@ async function recoverAccountWithPhrase() {
   }
 
   await api('/api/recovery/verify', { username, phrase });
+  showRecoveryFlowStatus(
+    'Frase validada. O proximo popup vai criar uma nova passkey no novo dispositivo.',
+  );
+  log('Recuperacao: frase validada. A aguardar registo de nova passkey.');
   const options = await api('/api/recovery/register/start');
   const publicKey = prepareRegistrationOptions(options);
   const credential = await navigator.credentials.create({ publicKey });
   if (!credential) {
+    hideRecoveryFlowStatus();
     throw new Error('Registo de recuperacao cancelado pelo utilizador');
   }
 
@@ -404,6 +422,9 @@ async function recoverAccountWithPhrase() {
   const result = await api('/api/recovery/register/finish', { registrationResponse });
   usernameInput.value = result.username;
   showRecoveryPhrase(result.recoveryPhrase);
+  showRecoveryFlowStatus(
+    'Recuperacao concluida. A passkey antiga foi revogada e a nova passkey ficou ativa.',
+  );
   setRecoveryPanel(false);
 }
 

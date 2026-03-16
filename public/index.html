@@ -92,6 +92,41 @@
         </div>
       </section>
 
+      <section id="recoveryFlowCard" class="card hidden">
+        <h2>Recuperacao em curso</h2>
+        <div class="recoverySteps">
+          <div class="recoveryStep">
+            <span class="recoveryStepIndex">1</span>
+            <div>
+              <p class="recoveryStepTitle">Frase validada</p>
+              <p class="metaText">
+                A conta foi validada com sucesso usando a frase de recuperacao.
+              </p>
+            </div>
+          </div>
+          <div class="recoveryStep recoveryStepActive">
+            <span class="recoveryStepIndex">2</span>
+            <div>
+              <p class="recoveryStepTitle">Registar nova passkey</p>
+              <p class="metaText">
+                O proximo popup serve para criar uma nova passkey no novo dispositivo,
+                nao para autenticar com a anterior.
+              </p>
+            </div>
+          </div>
+          <div class="recoveryStep">
+            <span class="recoveryStepIndex">3</span>
+            <div>
+              <p class="recoveryStepTitle">Concluir recuperacao</p>
+              <p class="metaText">
+                A passkey antiga sera revogada e a frase de recuperacao sera renovada.
+              </p>
+            </div>
+          </div>
+        </div>
+        <p id="recoveryFlowStatus" class="metaText"></p>
+      </section>
+
       <section class="card">
         <h2>Estado</h2>
         <p id="support"></p>

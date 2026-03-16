@@ -230,6 +230,50 @@ button {
   color: var(--ink);
 }
 
+.recoverySteps {
+  display: grid;
+  gap: 12px;
+}
+
+.recoveryStep {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f6f9ff;
+  border: 1px solid #dce6f8;
+}
+
+.recoveryStepActive {
+  background: #fff8e7;
+  border-color: #eed89a;
+}
+
+.recoveryStepIndex {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #d8e7ff;
+  color: #143269;
+  font-weight: 800;
+}
+
+.recoveryStepActive .recoveryStepIndex {
+  background: #ffd46d;
+  color: #5a4200;
+}
+
+.recoveryStepTitle {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .passkeyItemHead {
     align-items: flex-start;
