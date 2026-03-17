@@ -213,9 +213,9 @@ function hideRecoveryFlowStatus() {
 function renderRecoveryStatus(recovery) {
   currentRecoveryConfigured = Boolean(recovery?.configured);
   if (!recovery?.configured) {
-    recoveryStatusSummary.textContent = 'Nao configurada';
+    recoveryStatusSummary.textContent = 'Não configurada';
     recoveryStatusDetail.textContent =
-      'Gera uma frase de recuperacao de 10 palavras para reenrolar a passkey se perderes o dispositivo.';
+      'Gera uma frase de recuperação de 10 palavras para reenrolar a passkey se perderes o dispositivo.';
     generateRecoveryBtn.classList.remove('hidden');
     rotateRecoveryBtn.classList.add('hidden');
     return;
@@ -223,7 +223,7 @@ function renderRecoveryStatus(recovery) {
 
   recoveryStatusSummary.textContent = `Configurada (${recovery.wordCount} palavras)`;
   recoveryStatusDetail.textContent =
-    `Criada em ${formatDateTime(recovery.createdAt)}. Ultimo uso: ${formatDateTime(recovery.lastUsedAt)}.`;
+    `Criada em ${formatDateTime(recovery.createdAt)}. Último uso: ${formatDateTime(recovery.lastUsedAt)}.`;
   generateRecoveryBtn.classList.add('hidden');
   rotateRecoveryBtn.classList.remove('hidden');
 }
@@ -232,7 +232,7 @@ function renderPasskeys(passkeys) {
   if (!passkeys.length) {
     passkeySummary.textContent = 'Sem passkeys associadas a esta conta.';
     passkeyList.innerHTML =
-      '<p class="passkeyEmpty">Nao existe nenhuma passkey ativa. Podes voltar a registar uma nova.</p>';
+      '<p class="passkeyEmpty">Não existe nenhuma passkey ativa. Podes voltar a registar uma nova.</p>';
     return;
   }
 
@@ -243,7 +243,7 @@ function renderPasskeys(passkeys) {
     .map((passkey) => {
       const transports = passkey.transports.length
         ? passkey.transports.join(', ')
-        : 'Nao reportado';
+        : 'Não reportado';
 
       return `
         <article class="passkeyItem">
@@ -261,7 +261,7 @@ function renderPasskeys(passkeys) {
               <span class="passkeyMetaValue">${escapeHtml(formatDateTime(passkey.createdAt))}</span>
             </div>
             <div class="passkeyMetaBlock">
-              <span class="passkeyMetaLabel">Ultimo uso</span>
+              <span class="passkeyMetaLabel">Último uso</span>
               <span class="passkeyMetaValue">${escapeHtml(formatDateTime(passkey.lastUsedAt))}</span>
             </div>
             <div class="passkeyMetaBlock">
@@ -277,7 +277,7 @@ function renderPasskeys(passkeys) {
             passkey.isActive && currentRecoveryConfigured
               ? `<div class="actions"><button type="button" class="dangerButton" data-passkey-action="revoke" data-passkey-id="${escapeHtml(passkey.id)}">Revogar passkey</button></div>`
               : passkey.isActive
-                ? '<p class="metaText">Configura primeiro uma frase de recuperacao para poderes revogar esta passkey com seguranca.</p>'
+                ? '<p class="metaText">Configura primeiro uma frase de recuperação para poderes revogar esta passkey com segurança.</p>'
               : ''
           }
         </article>
@@ -296,7 +296,7 @@ async function refreshPasskeys() {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || 'Nao foi possivel carregar as passkeys');
+    throw new Error(data.error || 'Não foi possível carregar as passkeys');
   }
 
   renderPasskeys(data.passkeys || []);
@@ -306,7 +306,7 @@ async function refreshSession() {
   const response = await fetch('/api/me');
   const data = await response.json();
   if (data.loggedIn) {
-    sessionEl.textContent = `Sessao ativa: ${data.username}`;
+    sessionEl.textContent = `Sessão ativa: ${data.username}`;
     homeUser.textContent = `Utilizador: ${data.username}`;
     authCard.classList.add('hidden');
     homeCard.classList.remove('hidden');
@@ -315,7 +315,7 @@ async function refreshSession() {
     renderRecoveryStatus(data.recovery || { configured: false, wordCount: 10 });
     await refreshPasskeys();
   } else {
-    sessionEl.textContent = 'Sessao ativa: nao autenticado';
+    sessionEl.textContent = 'Sessão ativa: não autenticado';
     homeUser.textContent = '';
     authCard.classList.remove('hidden');
     homeCard.classList.add('hidden');
@@ -338,7 +338,7 @@ async function registerPasskey() {
 
   const options = await api('/api/register/start', { username });
   if ((options.excludeCredentials || []).length > 0) {
-    throw new Error('Este utilizador ja tem uma passkey registada. Nao e permitido criar outra.');
+    throw new Error('Este utilizador já tem uma passkey registada. Não é permitido criar outra.');
   }
 
   const publicKey = prepareRegistrationOptions(options);
@@ -380,7 +380,7 @@ async function logout() {
 async function generateRecoveryPhraseSetup(rotate) {
   if (rotate) {
     const confirmed = window.confirm(
-      'Isto vai substituir a frase de recuperacao atual. Queres continuar?',
+      'Isto vai substituir a frase de recuperação atual. Queres continuar?',
     );
     if (!confirmed) {
       return { cancelled: true };
@@ -399,23 +399,23 @@ async function recoverAccountWithPhrase() {
   const username = getUsername();
   const phrase = getRecoveryPhraseInput();
   if (!username) {
-    throw new Error('Indica o utilizador antes de iniciar a recuperacao');
+    throw new Error('Indica o utilizador antes de iniciar a recuperação');
   }
   if (!phrase) {
-    throw new Error('Indica a frase de recuperacao');
+    throw new Error('Indica a frase de recuperação');
   }
 
   await api('/api/recovery/verify', { username, phrase });
   showRecoveryFlowStatus(
-    'Frase validada. O proximo popup vai criar uma nova passkey no novo dispositivo.',
+    'Frase validada. Continua no popup para concluir o registo da nova passkey.',
   );
-  log('Recuperacao: frase validada. A aguardar registo de nova passkey.');
+  log('Recuperação: frase validada. A aguardar registo da nova passkey.');
   const options = await api('/api/recovery/register/start');
   const publicKey = prepareRegistrationOptions(options);
   const credential = await navigator.credentials.create({ publicKey });
   if (!credential) {
     hideRecoveryFlowStatus();
-    throw new Error('Registo de recuperacao cancelado pelo utilizador');
+    throw new Error('Registo de recuperação cancelado pelo utilizador');
   }
 
   const registrationResponse = credentialToJSON(credential);
@@ -423,14 +423,14 @@ async function recoverAccountWithPhrase() {
   usernameInput.value = result.username;
   showRecoveryPhrase(result.recoveryPhrase);
   showRecoveryFlowStatus(
-    'Recuperacao concluida. A passkey antiga foi revogada e a nova passkey ficou ativa.',
+    'Recuperação concluída. A passkey antiga foi revogada e a nova passkey ficou ativa.',
   );
   setRecoveryPanel(false);
 }
 
 async function revokePasskey(credentialId) {
   const confirmed = window.confirm(
-    'Isto vai revogar a passkey atual e terminar a sessao. Queres continuar?',
+    'Isto vai revogar a passkey atual e terminar a sessão. Queres continuar?',
   );
   if (!confirmed) {
     return { cancelled: true };
@@ -475,8 +475,8 @@ async function withAction(action, title) {
 async function boot() {
   const supports = !!window.PublicKeyCredential;
   supportEl.textContent = supports
-    ? 'WebAuthn suportado neste browser. Registo restrito a passkey movel externa (hybrid).'
-    : 'Este browser nao suporta WebAuthn.';
+    ? 'WebAuthn suportado neste browser. Registo restrito a passkey móvel externa (hybrid).'
+    : 'Este browser não suporta WebAuthn.';
 
   if (!supports) {
     setButtons(false);
@@ -492,14 +492,14 @@ async function boot() {
   toggleRecoveryBtn.addEventListener('click', () => setRecoveryPanel(true));
   cancelRecoveryBtn.addEventListener('click', () => setRecoveryPanel(false));
   recoverAccountBtn.addEventListener('click', () =>
-    withAction(recoverAccountWithPhrase, 'Recuperacao de conta'),
+    withAction(recoverAccountWithPhrase, 'Recuperação de conta'),
   );
   homeLogoutBtn.addEventListener('click', () => withAction(logout, 'Logout'));
   generateRecoveryBtn.addEventListener('click', () =>
-    withAction(() => generateRecoveryPhraseSetup(false), 'Gerar frase de recuperacao'),
+    withAction(() => generateRecoveryPhraseSetup(false), 'Gerar frase de recuperação'),
   );
   rotateRecoveryBtn.addEventListener('click', () =>
-    withAction(() => generateRecoveryPhraseSetup(true), 'Regenerar frase de recuperacao'),
+    withAction(() => generateRecoveryPhraseSetup(true), 'Regenerar frase de recuperação'),
   );
   dismissRecoveryPhraseBtn.addEventListener('click', () => hideRecoveryPhrase());
   passkeyList.addEventListener('click', (event) => {

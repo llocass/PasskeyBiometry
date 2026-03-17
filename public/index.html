@@ -11,7 +11,7 @@
       <h1>Passkey + Biometria</h1>
       <p class="subtitle">
         Registo e login com passkey em <code>localhost</code>. Registo bloqueado para
-        1 passkey por utilizador e apenas via dispositivo movel (fluxo QR/Bluetooth).
+        1 passkey por utilizador e apenas via dispositivo móvel (fluxo QR/Bluetooth).
       </p>
 
       <section id="authCard" class="card">
@@ -19,7 +19,7 @@
         <input id="username" type="text" autocomplete="username webauthn" />
 
         <div class="actions">
-          <button id="registerBtn" type="button">Registar passkey movel</button>
+          <button id="registerBtn" type="button">Registar passkey móvel</button>
           <button id="loginBtn" type="button">Entrar com passkey</button>
           <button id="toggleRecoveryBtn" type="button" class="secondaryButton">
             Recuperar conta
@@ -30,10 +30,10 @@
       <section id="recoveryCard" class="card hidden">
         <h2>Recuperar conta</h2>
         <p class="subtitle">
-          Usa o mesmo utilizador acima e introduz a tua frase de recuperacao para
+          Usa o mesmo utilizador acima e introduz a tua frase de recuperação para
           registar uma nova passkey.
         </p>
-        <label for="recoveryPhraseInput">Frase de recuperacao</label>
+        <label for="recoveryPhraseInput">Frase de recuperação</label>
         <textarea
           id="recoveryPhraseInput"
           rows="4"
@@ -54,12 +54,12 @@
         <p id="homeUser"></p>
         <section class="recoveryManager">
           <div class="passkeyManagerHead">
-            <h3>Frase de recuperacao</h3>
+            <h3>Frase de recuperação</h3>
             <p id="recoveryStatusSummary" class="metaText"></p>
           </div>
           <p id="recoveryStatusDetail" class="metaText"></p>
           <div class="actions">
-            <button id="generateRecoveryBtn" type="button">Gerar frase de recuperacao</button>
+            <button id="generateRecoveryBtn" type="button">Gerar frase de recuperação</button>
             <button id="rotateRecoveryBtn" type="button" class="secondaryButton">
               Regenerar frase
             </button>
@@ -72,7 +72,7 @@
           </div>
           <div id="passkeyList" class="passkeyList"></div>
           <p class="metaText">
-            Se revogares a passkey ativa, a sessao termina e podes registar uma nova.
+            Se revogares a passkey ativa, a sessão termina e podes registar uma nova.
           </p>
         </section>
         <div class="actions">
@@ -81,26 +81,26 @@
       </section>
 
       <section id="recoveryPhraseCard" class="card hidden">
-        <h2>Guarda esta frase de recuperacao</h2>
+        <h2>Guarda esta frase de recuperação</h2>
         <p class="subtitle">
-          Esta frase aparece uma unica vez. Guarda-a offline para recuperares a conta
+          Esta frase aparece uma única vez. Guarda-a offline para recuperares a conta
           se perderes o dispositivo da passkey.
         </p>
         <pre id="recoveryPhraseValue" class="recoveryPhraseValue"></pre>
         <div class="actions">
-          <button id="dismissRecoveryPhraseBtn" type="button">Ja guardei a frase</button>
+          <button id="dismissRecoveryPhraseBtn" type="button">Já guardei a frase</button>
         </div>
       </section>
 
       <section id="recoveryFlowCard" class="card hidden">
-        <h2>Recuperacao em curso</h2>
+        <h2>Recuperação em curso</h2>
         <div class="recoverySteps">
           <div class="recoveryStep">
             <span class="recoveryStepIndex">1</span>
             <div>
               <p class="recoveryStepTitle">Frase validada</p>
               <p class="metaText">
-                A conta foi validada com sucesso usando a frase de recuperacao.
+                A conta foi validada com sucesso usando a frase de recuperação.
               </p>
             </div>
           </div>
@@ -109,17 +109,17 @@
             <div>
               <p class="recoveryStepTitle">Registar nova passkey</p>
               <p class="metaText">
-                O proximo popup serve para criar uma nova passkey no novo dispositivo,
-                nao para autenticar com a anterior.
+                Continua no próximo popup para associar uma nova passkey ao dispositivo
+                escolhido.
               </p>
             </div>
           </div>
           <div class="recoveryStep">
             <span class="recoveryStepIndex">3</span>
             <div>
-              <p class="recoveryStepTitle">Concluir recuperacao</p>
+              <p class="recoveryStepTitle">Concluir recuperação</p>
               <p class="metaText">
-                A passkey antiga sera revogada e a frase de recuperacao sera renovada.
+                A passkey antiga será revogada e a frase de recuperação será renovada.
               </p>
             </div>
           </div>
